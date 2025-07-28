@@ -1,9 +1,7 @@
-use url::Url;
-
 use elasticsearch::{
     Elasticsearch,
     auth::Credentials,
-    http::transport::{SingleNodeConnectionPool, Transport, TransportBuilder},
+    http::transport::{SingleNodeConnectionPool, TransportBuilder},
 };
 
 pub struct EsClient {
@@ -30,11 +28,7 @@ impl EsClient {
             String::from("GrjXqOPYXAO7gPxlv4P2"),
         );
 
-        let mut lists: Vec<&str> = Vec::new();
-        lists.push(&self.host);
-
-        let u: Url = "https://localhost:9200".parse().unwrap();
-        let conn_pool = SingleNodeConnectionPool::new(u);
+        let conn_pool = SingleNodeConnectionPool::new(self.host.parse().unwrap());
         let transport = match TransportBuilder::new(conn_pool)
             .auth(credentials)
             .cert_validation(elasticsearch::cert::CertificateValidation::None)

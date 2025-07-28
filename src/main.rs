@@ -3,8 +3,9 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 mod sql_row;
+use elasticsearch::http::headers::{HeaderName, HeaderValue};
 use elasticsearch::{BulkOperation, BulkParts};
-use serde_json::Value;
+use serde_json::{Value, json};
 use sql_row::SQLRow;
 
 mod esclient;
@@ -23,7 +24,7 @@ async fn main() -> io::Result<()> {
         file_name = arg.to_lowercase();
     }
 
-    let mut es: EsClient = EsClient::new("https://elastic:GrjXqOPYXAO7gPxlv4P2@127.0.0.1:9200");
+    let mut es: EsClient = EsClient::new("https://127.0.0.1:9200");
     let es_mut_ref = &mut es;
 
     // 打开文件
@@ -114,9 +115,9 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
         println!("json: {}", record.to_json());
 
         // 插入数据到ES
-        let mut operations: Vec<BulkOperation<String>> = Vec::new();
+        let mut operations: Vec<BulkOperation<Value>> = Vec::new();
         operations.push(
-            BulkOperation::index(record.to_json())
+            BulkOperation::index(record.to_jsondoc())
                 .id(format!("{}", record.get_id()))
                 .into(),
         );
@@ -126,6 +127,10 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
         let bulk_response = match client
             .bulk(BulkParts::Index(index))
             .body(operations)
+            //.header(
+            //    HeaderName::from_static("Content-Type"),
+            //    HeaderValue::from_static("application/json"),
+            //)
             .send()
             .await
         {
