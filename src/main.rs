@@ -2,6 +2,9 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
+mod sql_row;
+use sql_row::SQLRow;
+
 fn main() -> io::Result<()> {
     // 设置默认解析文件
     let mut file_name: String = String::from("./example.sql");
@@ -61,6 +64,38 @@ fn parse_insert_sql(sql: &String) -> bool {
     for part in parts {
         let record: &str = part.trim_end_matches(");");
         println!("part: {}", record);
+
+        let s: String = String::from(record);
+        let mut comma_opened = false;
+        let mut field = String::from("");
+        let mut field_num = 1;
+        let mut field_type = String::from("int");
+        let mut record = SQLRow::new();
+        for c in s.chars() {
+            // 用引号包括的字段，不需要分解
+            if c == '\'' {
+                comma_opened = !comma_opened;
+
+                // 有单引号则使用字符串类型
+                if comma_opened {
+                    field_type = String::from("str");
+                }
+            }
+
+            // 字段结束
+            if c == ',' && !comma_opened {
+                println!("field: [{}]: {}", field_num, field);
+                let _ = record.append_item(field_num, field_type, field.clone());
+                field_num = field_num + 1;
+                field = String::from("");
+                field_type = String::from("int");
+                continue;
+            }
+            field.push(c);
+        }
+        let _ = record.append_item(field_num, field_type, field.clone());
+        println!("field: [{}]: {}", field_num, field);
+        println!("json: {}", record.to_json());
     }
 
     true
