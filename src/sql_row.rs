@@ -7,12 +7,20 @@ struct RowItem {
 }
 
 pub struct SQLRow {
+    id: i32,
     items: Vec<RowItem>,
 }
 
 impl SQLRow {
     pub fn new() -> Self {
-        SQLRow { items: Vec::new() }
+        SQLRow {
+            items: Vec::new(),
+            id: 0,
+        }
+    }
+
+    pub fn get_id(&mut self) -> i32 {
+        self.id
     }
 
     pub fn append_item(
@@ -26,8 +34,19 @@ impl SQLRow {
         let item = RowItem {
             field_num: num,
             field_type: field_type,
-            field_content: field_content,
+            field_content: field_content.clone(),
         };
+
+        if num == 1 {
+            match field_content.parse::<i32>() {
+                Ok(number) => {
+                    self.id = number;
+                }
+                Err(e) => {
+                    println!("error converting {} to i32: {}", field_content, e);
+                }
+            }
+        }
 
         self.items.push(item);
 

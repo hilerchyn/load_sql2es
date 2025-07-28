@@ -3,9 +3,15 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 mod sql_row;
+use elasticsearch::{BulkOperation, BulkParts};
+use serde_json::Value;
 use sql_row::SQLRow;
 
-fn main() -> io::Result<()> {
+mod esclient;
+use esclient::EsClient;
+
+#[tokio::main]
+async fn main() -> io::Result<()> {
     // 设置默认解析文件
     let mut file_name: String = String::from("./example.sql");
 
@@ -16,6 +22,9 @@ fn main() -> io::Result<()> {
         // TODO: 替换lowercase函数
         file_name = arg.to_lowercase();
     }
+
+    let mut es: EsClient = EsClient::new("https://elastic:GrjXqOPYXAO7gPxlv4P2@127.0.0.1:9200");
+    let es_mut_ref = &mut es;
 
     // 打开文件
     let file = File::open(file_name)?;
@@ -30,9 +39,14 @@ fn main() -> io::Result<()> {
         match temp_line {
             Ok(s) => {
                 // 解析插入SQL语句
-                let ok: bool = parse_insert_sql(s);
-                if !ok {
-                    continue;
+                //let _ = parse_insert_sql(es_mut_ref, s);
+                // let ok: bool = parse_insert_sql(es, s);
+                // if !ok {
+                //     continue;
+                // }
+                match parse_insert_sql(es_mut_ref, s).await {
+                    true => println!("submmitted"),
+                    false => eprintln!("failed"),
                 }
             }
             Err(e) => eprintln!("Error: {}", e),
@@ -50,12 +64,14 @@ fn main() -> io::Result<()> {
 }
 
 // 解析插入SQL语句
-fn parse_insert_sql(sql: &String) -> bool {
+async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
     // 解析包含 VALUES 的文本
     let ps: Vec<String> = sql.split("VALUES (").map(String::from).collect();
     if ps.len() != 2 {
         return false;
     }
+
+    println!(">>>>>");
 
     // 获取 INSERT 语句中，批量写入的数据。
     // 并拆分为数组
@@ -96,6 +112,48 @@ fn parse_insert_sql(sql: &String) -> bool {
         let _ = record.append_item(field_num, field_type, field.clone());
         println!("field: [{}]: {}", field_num, field);
         println!("json: {}", record.to_json());
+
+        // 插入数据到ES
+        let mut operations: Vec<BulkOperation<String>> = Vec::new();
+        operations.push(
+            BulkOperation::index(record.to_json())
+                .id(format!("{}", record.get_id()))
+                .into(),
+        );
+
+        let index = "demo_sql_insert";
+        let client = es_client.get_client();
+        let bulk_response = match client
+            .bulk(BulkParts::Index(index))
+            .body(operations)
+            .send()
+            .await
+        {
+            Ok(response) => response,
+            Err(e) => {
+                eprintln!("failed to send bulk request: {}", e);
+                return false;
+            }
+        };
+
+        let response_body = match bulk_response.json::<Value>().await {
+            Ok(body) => body,
+            Err(e) => {
+                eprintln!("Failed to parse bulk response: {}", e);
+                return false;
+            }
+        };
+
+        match response_body["errors"].as_bool() {
+            Some(false) => {
+                println!("Bulk indexed {} records to '{}'", record.get_id(), index);
+                true
+            }
+            _ => {
+                eprintln!("Bulk indexing errors: {:?}", response_body["items"]);
+                false
+            }
+        };
     }
 
     true
