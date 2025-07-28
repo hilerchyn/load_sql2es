@@ -3,9 +3,8 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 mod sql_row;
-use elasticsearch::http::headers::{HeaderName, HeaderValue};
 use elasticsearch::{BulkOperation, BulkParts};
-use serde_json::{Value, json};
+use serde_json::Value;
 use sql_row::SQLRow;
 
 mod esclient;
@@ -57,7 +56,7 @@ async fn main() -> io::Result<()> {
         count = count + 1;
         //println!("[{}]:\t{}", count, line?);
         if count == 50 {
-            break;
+            //break;
         }
     }
 
@@ -72,15 +71,13 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
         return false;
     }
 
-    println!(">>>>>");
-
     // 获取 INSERT 语句中，批量写入的数据。
     // 并拆分为数组
     let parts: Vec<String> = (&ps[1]).split("),(").map(String::from).collect();
-    println!("lenght: {}", parts.len());
+    // println!("lenght: {}", parts.len());
     for part in parts {
         let record: &str = part.trim_end_matches(");");
-        println!("part: {}", record);
+        // println!("part: {}", record);
 
         let s: String = String::from(record);
         let mut comma_opened = false;
@@ -101,7 +98,7 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
 
             // 字段结束
             if c == ',' && !comma_opened {
-                println!("field: [{}]: {}", field_num, field);
+                //println!("field: [{}]: {}", field_num, field);
                 let _ = record.append_item(field_num, field_type, field.clone());
                 field_num = field_num + 1;
                 field = String::from("");
@@ -111,8 +108,8 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
             field.push(c);
         }
         let _ = record.append_item(field_num, field_type, field.clone());
-        println!("field: [{}]: {}", field_num, field);
-        println!("json: {}", record.to_json());
+        // println!("field: [{}]: {}", field_num, field);
+        // println!("json: {}", record.to_json());
 
         // 插入数据到ES
         let mut operations: Vec<BulkOperation<Value>> = Vec::new();
@@ -151,7 +148,7 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
 
         match response_body["errors"].as_bool() {
             Some(false) => {
-                println!("Bulk indexed {} records to '{}'", record.get_id(), index);
+                // println!("Bulk indexed {} records to '{}'", record.get_id(), index);
                 true
             }
             _ => {

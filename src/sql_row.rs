@@ -7,6 +7,7 @@ struct RowItem {
     field_content: String,
 }
 
+#[warn(dead_code)]
 pub struct SQLRow {
     id: i32,
     items: Vec<RowItem>,
@@ -30,7 +31,7 @@ impl SQLRow {
         field_type: String,
         field_content: String,
     ) -> io::Result<()> {
-        println!("sqlrow: {}->{}", num, field_content);
+        // println!("sqlrow: {}->{}", num, field_content);
 
         let item = RowItem {
             field_num: num,
