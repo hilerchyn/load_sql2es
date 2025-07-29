@@ -7,7 +7,6 @@ struct RowItem {
     field_content: String,
 }
 
-#[warn(dead_code)]
 pub struct SQLRow {
     id: i32,
     items: Vec<RowItem>,
@@ -113,11 +112,11 @@ impl SQLRow {
 
     // 将记录转换为JSON
     pub fn to_jsondoc(&mut self) -> Value {
-        let mut record_id = "";
+        let mut record_id: u64 = 0;
         let mut code = "";
         let mut device_id = "";
         let mut receive_msg = "";
-        let mut create_time = "";
+        let mut create_time: u64 = 0;
         let mut sys_num = "";
         let mut upload_time = "";
         let mut reason_msg = "";
@@ -129,7 +128,10 @@ impl SQLRow {
             match item.field_num {
                 1 => {
                     field_name = "record_id";
-                    record_id = item.field_content.as_str();
+                    match item.field_content.parse::<u64>() {
+                        Ok(num) => record_id = num,
+                        Err(e) => println!("Error: {}", e),
+                    }
                 }
                 2 => {
                     field_name = "device_id";
@@ -145,7 +147,10 @@ impl SQLRow {
                 }
                 5 => {
                     field_name = "create_time";
-                    create_time = item.field_content.as_str();
+                    match item.field_content.parse::<u64>() {
+                        Ok(num) => create_time = num,
+                        Err(e) => println!("Error: {}", e),
+                    }
                 }
                 6 => {
                     field_name = "sys_num";
