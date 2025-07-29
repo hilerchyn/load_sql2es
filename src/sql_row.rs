@@ -34,7 +34,7 @@ impl SQLRow {
 
         let item = RowItem {
             field_num: num,
-            field_type: field_type,
+            field_type,
             field_content: field_content.clone(),
         };
 
@@ -55,6 +55,7 @@ impl SQLRow {
     }
 
     // 将记录转换为JSON
+    #[allow(dead_code)]
     pub fn to_json(&mut self) -> String {
         let mut result = String::from("{");
         let mut comma = "";

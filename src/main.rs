@@ -19,8 +19,7 @@ async fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     for (i, arg) in args.iter().enumerate().skip(1) {
         println!("Arg{}: {}", i, arg);
-        // TODO: 替换lowercase函数
-        file_name = arg.to_lowercase();
+        file_name = String::from(arg.as_str());
     }
 
     let mut es: EsClient = EsClient::new("https://127.0.0.1:9200");
