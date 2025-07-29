@@ -71,6 +71,8 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
         return false;
     }
 
+    let mut operations: Vec<BulkOperation<Value>> = Vec::new();
+
     // 获取 INSERT 语句中，批量写入的数据。
     // 并拆分为数组
     let parts: Vec<String> = (&ps[1]).split("),(").map(String::from).collect();
@@ -112,51 +114,50 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
         // println!("json: {}", record.to_json());
 
         // 插入数据到ES
-        let mut operations: Vec<BulkOperation<Value>> = Vec::new();
         operations.push(
             BulkOperation::index(record.to_jsondoc())
                 .id(format!("{}", record.get_id()))
                 .into(),
         );
-
-        let index = "demo_sql_insert";
-        let client = es_client.get_client();
-        let bulk_response = match client
-            .bulk(BulkParts::Index(index))
-            .body(operations)
-            //.header(
-            //    HeaderName::from_static("Content-Type"),
-            //    HeaderValue::from_static("application/json"),
-            //)
-            .send()
-            .await
-        {
-            Ok(response) => response,
-            Err(e) => {
-                eprintln!("failed to send bulk request: {}", e);
-                return false;
-            }
-        };
-
-        let response_body = match bulk_response.json::<Value>().await {
-            Ok(body) => body,
-            Err(e) => {
-                eprintln!("Failed to parse bulk response: {}", e);
-                return false;
-            }
-        };
-
-        match response_body["errors"].as_bool() {
-            Some(false) => {
-                // println!("Bulk indexed {} records to '{}'", record.get_id(), index);
-                true
-            }
-            _ => {
-                eprintln!("Bulk indexing errors: {:?}", response_body["items"]);
-                false
-            }
-        };
     }
+
+    let index = "demo_sql_insert";
+    let client = es_client.get_client();
+    let bulk_response = match client
+        .bulk(BulkParts::Index(index))
+        .body(operations)
+        //.header(
+        //    HeaderName::from_static("Content-Type"),
+        //    HeaderValue::from_static("application/json"),
+        //)
+        .send()
+        .await
+    {
+        Ok(response) => response,
+        Err(e) => {
+            eprintln!("failed to send bulk request: {}", e);
+            return false;
+        }
+    };
+
+    let response_body = match bulk_response.json::<Value>().await {
+        Ok(body) => body,
+        Err(e) => {
+            eprintln!("Failed to parse bulk response: {}", e);
+            return false;
+        }
+    };
+
+    match response_body["errors"].as_bool() {
+        Some(false) => {
+            // println!("Bulk indexed {} records to '{}'", record.get_id(), index);
+            true
+        }
+        _ => {
+            eprintln!("Bulk indexing errors: {:?}", response_body["items"]);
+            false
+        }
+    };
 
     true
 }
