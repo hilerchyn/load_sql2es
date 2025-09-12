@@ -120,7 +120,7 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
         );
     }
 
-    let index = "demo_sql_insert";
+    let index = "private_rts_upload_data";
     let client = es_client.get_client();
     let bulk_response = match client
         .bulk(BulkParts::Index(index))

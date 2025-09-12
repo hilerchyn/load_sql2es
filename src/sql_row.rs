@@ -114,13 +114,13 @@ impl SQLRow {
     // 将记录转换为JSON
     pub fn to_jsondoc(&mut self) -> Value {
         let mut record_id: u64 = 0;
-        let mut code = "";
-        let mut device_id = "";
-        let mut receive_msg = "";
+        let mut code = "".to_lowercase();
+        let mut device_id = "".to_lowercase();
+        let mut receive_msg = "".to_lowercase();
         let mut create_time: u64 = 0;
         let mut sys_num = "";
         let mut upload_time = "";
-        let mut reason_msg = "";
+        let mut reason_msg = "".to_lowercase();
 
         let mut result = String::from("{");
         let mut comma = "";
@@ -136,15 +136,27 @@ impl SQLRow {
                 }
                 2 => {
                     field_name = "device_id";
-                    device_id = item.field_content.as_str();
+                    device_id = item
+                        .field_content
+                        .trim_start_matches("'")
+                        .trim_end_matches("'")
+                        .to_lowercase();
                 }
                 3 => {
                     field_name = "code";
-                    code = item.field_content.as_str();
+                    code = item
+                        .field_content
+                        .trim_start_matches("'")
+                        .trim_end_matches("'")
+                        .to_lowercase();
                 }
                 4 => {
                     field_name = "receive_msg";
-                    receive_msg = item.field_content.as_str();
+                    receive_msg = item
+                        .field_content
+                        .trim_start_matches("'")
+                        .trim_end_matches("'")
+                        .to_lowercase();
                 }
                 5 => {
                     field_name = "create_time";
@@ -163,7 +175,11 @@ impl SQLRow {
                 }
                 8 => {
                     field_name = "reason_msg";
-                    reason_msg = item.field_content.as_str();
+                    reason_msg = item
+                        .field_content
+                        .trim_start_matches("'")
+                        .trim_end_matches("'")
+                        .to_lowercase();
                 }
                 _ => {
                     eprintln!(
@@ -186,6 +202,9 @@ impl SQLRow {
             if item.field_content == "NULL" {
                 content = String::from("null");
             }
+
+            // println!("content: {}", content);
+            // println!("brace: {}, {}", type_left_brace, type_right_brace);
 
             result.push_str(
                 format!(
