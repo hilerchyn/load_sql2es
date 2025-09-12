@@ -14,12 +14,19 @@ use esclient::EsClient;
 async fn main() -> io::Result<()> {
     // 设置默认解析文件
     let mut file_name: String = String::from("./example.sql");
+    let mut index_name: String = String::from("demo_sql_insert");
 
     // 从命令行参数中获取指定解析的数据文件
     let args: Vec<String> = env::args().collect();
     for (i, arg) in args.iter().enumerate().skip(1) {
-        println!("Arg{}: {}", i, arg);
-        file_name = String::from(arg.as_str());
+        if i == 1 {
+            index_name = String::from(arg.as_str());
+            println!("Arg{}: elasticsearch index > {}", i, arg);
+        }
+        if i == 2 {
+            file_name = String::from(arg.as_str());
+            println!("Arg{}: file name > {}", i, arg);
+        }
     }
 
     let mut es: EsClient = EsClient::new("https://127.0.0.1:9200");
@@ -43,7 +50,7 @@ async fn main() -> io::Result<()> {
                 // if !ok {
                 //     continue;
                 // }
-                match parse_insert_sql(es_mut_ref, s).await {
+                match parse_insert_sql(es_mut_ref, s, index_name.as_str()).await {
                     true => println!("submmitted"),
                     false => eprintln!("failed"),
                 }
@@ -63,7 +70,7 @@ async fn main() -> io::Result<()> {
 }
 
 // 解析插入SQL语句
-async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
+async fn parse_insert_sql(es_client: &mut EsClient, sql: &String, index_name: &str) -> bool {
     // 解析包含 VALUES 的文本
     let ps: Vec<String> = sql.split("VALUES (").map(String::from).collect();
     if ps.len() != 2 {
@@ -120,7 +127,7 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String) -> bool {
         );
     }
 
-    let index = "private_rts_upload_data";
+    let index = index_name;
     let client = es_client.get_client();
     let bulk_response = match client
         .bulk(BulkParts::Index(index))
