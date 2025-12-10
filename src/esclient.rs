@@ -4,15 +4,20 @@ use elasticsearch::{
     http::transport::{SingleNodeConnectionPool, TransportBuilder},
 };
 
+#[derive(Clone)]
 pub struct EsClient {
     host: String,
+    username: String,
+    password: String,
     es_client: Elasticsearch,
 }
 
 impl EsClient {
-    pub fn new(host: &str) -> Self {
+    pub fn new(host: &str, username: &str, password: &str) -> Self {
         let mut client = EsClient {
             host: host.to_lowercase(),
+            username: String::from(username),
+            password: String::from(password),
             es_client: Elasticsearch::default(),
         };
 
@@ -23,10 +28,7 @@ impl EsClient {
 
     pub fn initialize(&mut self) -> std::io::Result<()> {
         // Create Elasticsearch client
-        let credentials = Credentials::Basic(
-            String::from("elastic"),
-            String::from("GrjXqOPYXAO7gPxlv4P2"),
-        );
+        let credentials = Credentials::Basic(self.username.clone(), self.password.clone());
 
         let conn_pool = SingleNodeConnectionPool::new(self.host.parse().unwrap());
         let transport = match TransportBuilder::new(conn_pool)

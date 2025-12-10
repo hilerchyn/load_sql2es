@@ -1,11 +1,11 @@
 use clap::Parser;
+use elasticsearch::{BulkOperation, BulkParts};
+use serde_json::Value;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 mod sql_row;
-use elasticsearch::{BulkOperation, BulkParts};
-use serde_json::Value;
 use sql_row::SQLRow;
 
 mod esclient;
@@ -23,6 +23,12 @@ struct Args {
     #[arg(short, long, default_value_t = String::from("https://127.0.0.1:9200"))]
     es_host: String,
 
+    #[arg(short, long, default_value_t = String::from("elastic"))]
+    es_usename: String,
+
+    #[arg(short, long, default_value_t = String::from("GrjXqOPYXAO7gPxlv4P2"))]
+    es_password: String,
+
     #[arg(short = 'd', long, default_value_t = false)]
     debug: bool,
 }
@@ -35,7 +41,11 @@ async fn main() -> io::Result<()> {
     let file_name: String = cli_args.file;
     let index_name: String = cli_args.index_name;
 
-    let mut es: EsClient = EsClient::new(&cli_args.es_host);
+    let mut es: EsClient = EsClient::new(
+        &cli_args.es_host,
+        &cli_args.es_usename,
+        &cli_args.es_password,
+    );
     let es_mut_ref = &mut es;
 
     // 打开文件
