@@ -1,5 +1,4 @@
 use clap::Parser;
-use std::env;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -21,6 +20,9 @@ struct Args {
     #[arg(short, long, default_value_t = String::from("private_rts_upload_20251125"))]
     index_name: String,
 
+    #[arg(short, long, default_value_t = String::from("https://127.0.0.1:9200"))]
+    es_host: String,
+
     #[arg(short = 'd', long, default_value_t = false)]
     debug: bool,
 }
@@ -30,23 +32,10 @@ async fn main() -> io::Result<()> {
     let cli_args = Args::parse();
 
     // 设置默认解析文件
-    let mut file_name: String = cli_args.file;
-    let mut index_name: String = String::from("private_rts_upload_20251125");
+    let file_name: String = cli_args.file;
+    let index_name: String = cli_args.index_name;
 
-    // 从命令行参数中获取指定解析的数据文件
-    let args: Vec<String> = env::args().collect();
-    for (i, arg) in args.iter().enumerate().skip(1) {
-        if i == 1 {
-            index_name = String::from(arg.as_str());
-            println!("Arg{}: elasticsearch index > {}", i, arg);
-        }
-        if i == 2 {
-            file_name = String::from(arg.as_str());
-            println!("Arg{}: file name > {}", i, arg);
-        }
-    }
-
-    let mut es: EsClient = EsClient::new("https://127.0.0.1:9200");
+    let mut es: EsClient = EsClient::new(&cli_args.es_host);
     let es_mut_ref = &mut es;
 
     // 打开文件

@@ -72,7 +72,7 @@ impl SQLRow {
                 4 => field_name = "receive_msg",
                 5 => field_name = "create_time",
                 6 => field_name = "sys_num",
-                7 => field_name = "uploade_time",
+                7 => field_name = "upload_time",
                 8 => field_name = "reason_msg",
                 _ => {
                     eprintln!(
@@ -170,7 +170,7 @@ impl SQLRow {
                     sys_num = item.field_content.as_str();
                 }
                 7 => {
-                    field_name = "uploade_time";
+                    field_name = "upload_time";
                     upload_time = item.field_content.as_str();
                 }
                 8 => {
@@ -225,7 +225,7 @@ impl SQLRow {
             "receive_msg": receive_msg,
             "create_time": create_time,
             "sys_num": sys_num,
-            "uploade_time": upload_time,
+            "upload_time": upload_time,
             "reason_msg": reason_msg,
 
         })
