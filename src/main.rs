@@ -1,4 +1,6 @@
+use clap::Parser;
 use std::env;
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
@@ -10,11 +12,26 @@ use sql_row::SQLRow;
 mod esclient;
 use esclient::EsClient;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about=None)]
+struct Args {
+    #[arg(short, long)]
+    file: String,
+
+    #[arg(short, long, default_value_t = String::from("private_rts_upload_20251125"))]
+    index_name: String,
+
+    #[arg(short = 'd', long, default_value_t = false)]
+    debug: bool,
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
+    let cli_args = Args::parse();
+
     // 设置默认解析文件
-    let mut file_name: String = String::from("./example.sql");
-    let mut index_name: String = String::from("demo_sql_insert");
+    let mut file_name: String = cli_args.file;
+    let mut index_name: String = String::from("private_rts_upload_20251125");
 
     // 从命令行参数中获取指定解析的数据文件
     let args: Vec<String> = env::args().collect();
