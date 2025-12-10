@@ -114,11 +114,11 @@ impl SQLRow {
     // 将记录转换为JSON
     pub fn to_jsondoc(&mut self) -> Value {
         let mut record_id: u64 = 0;
-        let mut code = "".to_lowercase();
+        let mut code = 0; //"".to_lowercase();
         let mut device_id = "".to_lowercase();
         let mut receive_msg = "".to_lowercase();
         let mut create_time: u64 = 0;
-        let mut sys_num = "";
+        let mut sys_num = 0;
         let mut upload_time = "";
         let mut reason_msg = "".to_lowercase();
 
@@ -144,11 +144,14 @@ impl SQLRow {
                 }
                 3 => {
                     field_name = "code";
-                    code = item
+                    let field_content = item
                         .field_content
-                        .trim_start_matches("'")
-                        .trim_end_matches("'")
-                        .to_lowercase();
+                        .trim_matches('\'')
+                        .trim_start_matches('0');
+                    match field_content.parse::<i32>() {
+                        Ok(num) => code = num,
+                        Err(e) => println!("error: {}", e),
+                    }
                 }
                 4 => {
                     field_name = "receive_msg";
@@ -167,7 +170,10 @@ impl SQLRow {
                 }
                 6 => {
                     field_name = "sys_num";
-                    sys_num = item.field_content.as_str();
+                    match item.field_content.parse::<i32>() {
+                        Ok(num) => sys_num = num,
+                        Err(e) => println!("error: {}", e),
+                    }
                 }
                 7 => {
                     field_name = "upload_time";
