@@ -17,7 +17,7 @@ struct Args {
     #[arg(short, long)]
     file: String,
 
-    #[arg(short, long, default_value_t = String::from("private_rts_upload_20251125"))]
+    #[arg(short, long, default_value_t = String::from("rts_iot_upload_data_aliyun"))]
     index_name: String,
 
     #[arg(short, long, default_value_t = String::from("https://127.0.0.1:9200"))]
@@ -122,7 +122,7 @@ async fn parse_insert_sql(es_client: &mut EsClient, sql: &String, index_name: &s
 
             // 字段结束
             if c == ',' && !comma_opened {
-                //println!("field: [{}]: {}", field_num, field);
+                // println!("field: [{}]: {}", field_num, field);
                 let _ = record.append_item(field_num, field_type, field.clone());
                 field_num = field_num + 1;
                 field = String::from("");

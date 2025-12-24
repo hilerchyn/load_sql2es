@@ -1,6 +1,7 @@
 use serde_json::{Value, json};
 use std::io;
 
+#[derive(Debug)]
 struct RowItem {
     field_num: i32,
     field_type: String,
@@ -8,7 +9,7 @@ struct RowItem {
 }
 
 pub struct SQLRow {
-    id: i32,
+    id: i64,
     items: Vec<RowItem>,
 }
 
@@ -20,7 +21,7 @@ impl SQLRow {
         }
     }
 
-    pub fn get_id(&mut self) -> i32 {
+    pub fn get_id(&mut self) -> i64 {
         self.id
     }
 
@@ -39,7 +40,7 @@ impl SQLRow {
         };
 
         if num == 1 {
-            match field_content.parse::<i32>() {
+            match field_content.parse::<i64>() {
                 Ok(number) => {
                     self.id = number;
                 }
@@ -114,7 +115,7 @@ impl SQLRow {
     // 将记录转换为JSON
     pub fn to_jsondoc(&mut self) -> Value {
         let mut record_id: u64 = 0;
-        let mut code = 0; //"".to_lowercase();
+        let mut code = "".to_lowercase(); //"".to_lowercase();
         let mut device_id = "".to_lowercase();
         let mut receive_msg = "".to_lowercase();
         let mut create_time: u64 = 0;
@@ -131,7 +132,10 @@ impl SQLRow {
                     field_name = "record_id";
                     match item.field_content.parse::<u64>() {
                         Ok(num) => record_id = num,
-                        Err(e) => println!("Error: {}", e),
+                        Err(e) => {
+                            println!("debug: {:?}", item);
+                            println!("marshall record_id field error: {}", e);
+                        }
                     }
                 }
                 2 => {
@@ -144,14 +148,11 @@ impl SQLRow {
                 }
                 3 => {
                     field_name = "code";
-                    let field_content = item
+                    code = item
                         .field_content
-                        .trim_matches('\'')
-                        .trim_start_matches('0');
-                    match field_content.parse::<i32>() {
-                        Ok(num) => code = num,
-                        Err(e) => println!("error: {}", e),
-                    }
+                        .trim_start_matches("'")
+                        .trim_end_matches("'")
+                        .to_lowercase();
                 }
                 4 => {
                     field_name = "receive_msg";
@@ -165,14 +166,14 @@ impl SQLRow {
                     field_name = "create_time";
                     match item.field_content.parse::<u64>() {
                         Ok(num) => create_time = num,
-                        Err(e) => println!("Error: {}", e),
+                        Err(e) => println!("marshall create_time field error: {}", e),
                     }
                 }
                 6 => {
                     field_name = "sys_num";
                     match item.field_content.parse::<i32>() {
                         Ok(num) => sys_num = num,
-                        Err(e) => println!("error: {}", e),
+                        Err(e) => println!("marshall sys_num field error: {}", e),
                     }
                 }
                 7 => {
